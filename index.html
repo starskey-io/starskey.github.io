@@ -192,7 +192,7 @@
 
         <h2>Features</h2>
         <ul class="features">
-            <li><strong>Background compaction</strong> Compactions occur on writes, if any disk level reaches it's max size half of the sstables are merged into a new sstable and placed into the next level. This algorithm is recursive until last level. At last level if full we merge all sstables into a new sstable.</li>
+            <li><strong>Levelled partial merge compaction</strong> Compactions occur on writes, if any disk level reaches it's max size half of the sstables are merged into a new sstable and placed into the next level. This algorithm is recursive until last level. At last level if full we merge all sstables into a new sstable.</li>
             <li><strong>Simple API</strong> with Put, Get, Delete, Range, FilterKeys.</li>
             <li><strong>Atomic transactions</strong> You can group multiple operations into a single atomic transaction. If transactions fail they rollback.</li>
             <li><strong>Configurable options</strong> You can configure many options such as max levels, memtable threshold, bloom filter, and more.</li>
