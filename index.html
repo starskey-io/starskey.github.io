@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Starskey - Fast embedded key value store</title>
+    <meta name="author" content="Alex Gaetano Padula">
+    <meta name="description" content="Starskey is a fast, durable log structured merge tree based embedded key value store for GO applications." />
+    <meta name="keywords" content="log structured, lsm tree, storage engine, key value store, go lang key value store, golang database, embedded golang key value store" />
+    <meta property="og:title" content="Starskey - Fast embedded key value store">
+    <meta property="og:description" content="Starskey is a fast, durable log structured merge tree based embedded key value store for GO applications.">
+    <meta property="og:image" content="assets/starskey-avatar-large.png">
+    <meta property="og:url" content="http://starskey.io">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="og:site_name" content="Starskey - Fast embedded key value store">
+    <meta name="twitter:image:alt" content="Starskey">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/prism.css" />
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Noto Sans", serif;
+            background: #e0e0e0;
+            color: #0d1e0b;
+        }
+
+        a, a:visited {
+            color: #4b504b;
+            text-decoration: none;
+        }
+
+        a:hover {
+            border-bottom: 2px solid #3BD622;
+        }
+
+        nav {
+            z-index: 2;
+            width: 100%;
+            height: 100px;
+            background: black;
+            color: white;
+            position: fixed;
+            line-height: 100px;
+            box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
+        }
+
+        .nav-inside {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .nav-inside section {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .nav-left {
+            padding: 10px;
+            float: left;
+        }
+
+        .nav-right {
+            padding: 10px;
+            float: right;
+        }
+
+        code, pre {
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            border-radius: 4px;
+        }
+
+        aside {
+            padding: 20px;
+            background: white;
+            width: 188px;
+            float: left;
+            display: block;
+            position: sticky;
+            margin-right: 20px;
+            margin-bottom: 20px;
+            top: 120px;
+            left: 0px;
+            -webkit-border-top-right-radius: 4px;
+            -webkit-border-bottom-right-radius: 4px;
+            -moz-border-radius-topright: 4px;
+            -moz-border-radius-bottomright: 4px;
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 5px 0px, rgba(0, 0, 0, 0.1) 0px 0px 1px 0px;
+        }
+
+        aside ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        aside ul li {
+            padding: 5px;
+        }
+
+        article {
+            float: left;
+        }
+
+        article h1 {
+            font-size: 32px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        article h2 , article h3 {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            color: #4b504b;
+        }
+
+        .container {
+            width: 780px;
+            display: block;
+            padding-top: 120px;
+            z-index: 1;
+            padding-left: 40px;
+            position: relative;
+            overflow: hidden;
+
+        }
+
+        footer {
+            width: 100%;
+            display: block;
+            margin-top: 20px;
+            border-top: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+            color: #797979;
+        }
+
+        .features {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+
+        .features li::before {
+            content: "\2713"; /* Unicode for check mark */
+            color: green;
+            margin-right: 10px;
+        }
+
+    </style>
+</head>
+<body>
+<nav>
+ <section class="nav-inside">
+     <section class="nav-left">
+         <img width="156" src="assets/starskey_logo.png" alt="Starskey Logo">
+     </section>
+
+     <section class="nav-right">
+         <a class="github-button" href="https://github.com/starskey-io/starskey" data-color-scheme="no-preference: light; light: light; dark: dark;" data-size="large" data-show-count="true" aria-label="Star starskey-io/starskey on GitHub">Star</a>
+     </section>
+ </section>
+
+</nav>
+
+<aside>
+    <ul>
+        <li><a href="#what-is-starskey">What is Starskey?</a></li>
+        <li><a href="#getting-started">Getting Started</a></li>
+        <li><a href="#crud-ops">CRUD Operations</a></li>
+        <li><a href="#txns">Transactions</a></li>
+        <li><a href="#query-by-range">Querying by range</a></li>
+        <li><a href="#query-by-filter">Querying by filter</a></li>
+    </ul>
+</aside>
+
+<main class="container">
+
+    <article>
+        <h1 id="what-is-starskey">What is Starskey?</h1>
+         <p>Starskey is a fast embedded key-value store package for GO! Starskey implements a multi-level, durable log structured merge tree.</p><br/>
+
+         <p>It is inspired by the WiscKey paper and the LevelDB implementation.</p>
+
+        <h2>Features</h2>
+        <ul class="features">
+            <li><strong>Background compaction</strong> Compactions occur on writes, if any disk level reaches it's max size half of the sstables are merged into a new sstable and placed into the next level. This algorithm is recursive until last level. At last level if full we merge all sstables into a new sstable.</li>
+            <li><strong>Simple API</strong> with Put, Get, Delete, Range, FilterKeys.</li>
+            <li><strong>Atomic transactions</strong> You can group multiple operations into a single atomic transaction. If transactions fail they rollback.</li>
+            <li><strong>Configurable options</strong> You can configure many options such as max levels, memtable threshold, bloom filter, and more.</li>
+            <li><strong>WAL with recovery</strong> Starskey uses a write ahead log to ensure durability. Memtable is replayed if a flush did not occur prior to shutdown. On sorted runs to disk the WAL is truncated.</li>
+            <li><strong>Key value separation</strong> Keys and values are stored separately for sstables.</li>
+            <li><strong>Bloom filters</strong> Each sstable has an in memory bloom filter to reduce disk reads.</li>
+            <li><strong>Fast</strong> up to 400k+ ops per second.</li>
+            <li><strong>Compression</strong> Snappy compression is available.</li>
+            <li><strong>Logging</strong> Logging to file is available.</li>
+            <li><strong>Thread safe</strong> Starskey is thread safe.</li>
+        </ul>
+
+        <h1 id="getting-started">Getting Started</h1>
+<h2>Importing</h2>
+<pre class="language-go">
+<code class="language-go">
+import (
+    "github.com/starskey-io/starskey"
+)
+</code>
+</pre>
+
+<h2>Opening and configuration</h2>
+        <p>To open a new database you must pass a configuration pointer.  This is required.</p>
+<pre class="language-go">
+<code class="language-go">
+starskey, err := Open(&Config{
+        Permission:     0755,           // Dir, file permission
+        Directory:      "test",         // Directory to store data
+        FlushThreshold: 1024 * 1024,    // Flush threshold in bytes
+        MaxLevel:       3,              // Max levels number of disk levels
+        SizeFactor:     10,             // Size factor for each level.  Say 10 that's 10 * the FlushThreshold at each level. So level 1 is 10MB, level 2 is 100MB, level 3 is 1GB.
+        BloomFilter:    false,          // If you want to use bloom filters
+        Logging:        true,           // Enable logging to file
+        Compression:    false,          // Enable compression (Snappy)
+    })                                  // Config cannot be nil**
+if err != nil {
+    t.Fatalf("Failed to open starskey: %v", err)
+}
+</code>
+</pre>
+        <h2>Close</h2>
+        <p>To close database gracefully.</p>
+        <pre class="language-go">
+<code class="language-go">
+if err := starskey.Close(); err != nil {
+    t.Fatalf("Failed to close starskey: %v", err)
+}
+</code>
+</pre>
+
+        <h1 id="crud-ops">CRUD Operations</h1>
+
+        <h2>Putting, Getting, Deleting </h2>
+        <h3>Put</h3>
+        <p>To write we just pass a key and a value byte array.</p>
+<pre class="language-go">
+<code class="language-go">
+key := []byte("some_key")
+value := []byte("some_value")
+
+if err := starskey.Put(key, value); err != nil {
+    t.Fatalf("Failed to put key-value pair: %v", err)
+}
+</code>
+</pre>
+        <p>To update a keys value you run put with a different value.</p>
+
+        <h3>Get</h3>
+        <p>To retrieve a value you pass a key byte array.</p>
+        <pre class="language-go">
+<code class="language-go">
+v, err := starskey.Get(key)
+if err != nil {
+    t.Fatalf("Failed to get key-value pair: %v", err)
+}
+</code>
+</pre>
+
+        <h3>Delete</h3>
+        <p>To remove a key-value you pass a key byte array you want to remove.</p>
+        <pre class="language-go">
+<code class="language-go">
+if err := starskey.Delete([]byte("key")); err != nil {
+    t.Fatalf("Failed to delete key: %v", err)
+}
+</code>
+</pre>
+
+
+<h1 id="txns">Transactions</h1>
+<p>Using atomic transactions to group multiple operations into a single atomic transaction.</p>
+
+        <pre class="language-go">
+<code class="language-go">
+txn := starskey.BeginTxn()
+if txn == nil {
+    t.Fatalf("Failed to begin transaction")
+}
+
+txn.Put([]byte("key"), []byte("value"))
+// or txn.Delete([]byte("key"))
+
+if err := txn.Commit(); err != nil {
+    t.Fatalf("Failed to commit transaction: %v", err)
+}
+</code>
+</pre>
+
+<h1 id="query-by-range">Querying by range</h1>
+<p>Using range method to get a range of values between two keys.</p>
+        <pre class="language-go">
+<code class="language-go">
+results, err := starskey.Range([]byte("key900"), []byte("key980"))
+if err != nil {
+    t.Fatalf("Failed to range: %v", err)
+}
+</code>
+</pre>
+
+        <h1 id="query-by-filter">Querying by filter</h1>
+        <p>Using filter to filter keys based on a function.</p>
+        <pre class="language-go">
+<code class="language-go">
+compareFunc := func(key []byte) bool {
+    // if has prefix "c" return true
+    return bytes.HasPrefix(key, []byte("c"))
+}
+
+results, err := starskey.FilterKeys(compareFunc)
+if err != nil {
+    t.Fatalf("Failed to filter: %v", err)
+}
+</code>
+</pre>
+
+
+    </article>
+
+</main>
+
+<footer>
+    <p>&copy; 2025 Starskey, all rights reserved.</p>
+</footer>
+
+<script src="assets/prism.js"></script>
+<script async defer src="https://buttons.github.io/buttons.js"></script>
+</body>
+
+</html>
