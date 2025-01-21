@@ -194,7 +194,7 @@
         <ul class="features">
             <li><strong>Levelled partial merge compaction</strong> Compactions occur on writes, if any disk level reaches it's max size half of the sstables are merged into a new sstable and placed into the next level. This algorithm is recursive until last level. At last level if full we merge all sstables into a new sstable.</li>
             <li><strong>Simple API</strong> with Put, Get, Delete, Range, FilterKeys.</li>
-            <li><strong>Atomic transactions</strong> You can group multiple operations into a single atomic transaction. If transactions fail they rollback.</li>
+            <li><strong>Atomic transactions</strong> You can group multiple operations into a single atomic transaction.  If any operation fails the entire transaction is rolled back.  Only committed transactions roll back.</li>
             <li><strong>Configurable options</strong> You can configure many options such as max levels, memtable threshold, bloom filter, and more.</li>
             <li><strong>WAL with recovery</strong> Starskey uses a write ahead log to ensure durability. Memtable is replayed if a flush did not occur prior to shutdown. On sorted runs to disk the WAL is truncated.</li>
             <li><strong>Key value separation</strong> Keys and values are stored separately for sstables.</li>
@@ -220,15 +220,16 @@ import (
 <pre class="language-go">
 <code class="language-go">
 starskey, err := Open(&Config{
-        Permission:     0755,           // Dir, file permission
-        Directory:      "db_dir",         // Directory to store data
-        FlushThreshold: 1024 * 1024,    // Flush threshold in bytes
-        MaxLevel:       3,              // Max levels number of disk levels
-        SizeFactor:     10,             // Size factor for each level.  Say 10 that's 10 * the FlushThreshold at each level. So level 1 is 10MB, level 2 is 100MB, level 3 is 1GB.
-        BloomFilter:    false,          // If you want to use bloom filters
-        Logging:        true,           // Enable logging to file
-        Compression:    false,          // Enable compression (Snappy)
-    })                                  // Config cannot be nil**
+        Permission:        0755,                 // Dir, file permission
+        Directory:         "db_dir",             // Directory to store data
+        FlushThreshold:    (1024 * 1024) * 24,   // 24mb Flush threshold in bytes
+        MaxLevel:          3,                    // Max levels number of disk levels
+        SizeFactor:        10,                   // Size factor for each level.  Say 10 that's 10 * the FlushThreshold at each level. So level 1 is 10MB, level 2 is 100MB, level 3 is 1GB.
+        BloomFilter:       false,                // If you want to use bloom filters
+        Logging:           true,                 // Enable logging to file
+        Compression:       false,                // Enable compression
+        CompressionOption: NoCompression,        // Or SnappyCompression, S2Compression
+    })                                           // Config cannot be nil
 if err != nil {
     t.Fatalf("Failed to open starskey: %v", err)
 }
