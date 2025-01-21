@@ -303,6 +303,20 @@ if err := txn.Commit(); err != nil {
 </code>
 </pre>
 
+        <h3>Or</h3>
+        <pre class="language-go">
+<code class="language-go">
+err = starskey.Update(func(txn *Txn) error {
+    txn.Put([]byte("key"), []byte("value")) // or txn.Delete, txn.Get
+    // ..
+    return nil
+})
+if err != nil {
+    t.Fatalf("Failed to update: %v", err)
+}
+</code>
+</pre>
+
 <h1 id="query-by-range">Querying by range</h1>
 <p>Using range method to get a range of values between two keys.</p>
         <pre class="language-go">
