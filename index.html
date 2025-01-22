@@ -83,6 +83,7 @@
         }
 
         aside {
+            z-index: 5;
             padding: 20px;
             background: white;
             width: 188px;
@@ -112,6 +113,7 @@
         }
 
         article {
+            width: 100%;
             float: left;
         }
 
@@ -176,6 +178,51 @@
             border: none;
         }
 
+        .mob-button {
+            display: none;
+
+        }
+
+        .mob-button button {
+            width: 24px;
+            height: 24px;
+            background: black;
+            border: 2px solid #3BD622;
+            cursor: pointer;
+            margin-top: 12px;
+            display: inline-block;
+            float: left;
+            padding-left: 3px;
+            color: #3BD622;
+        }
+
+        .mob-button button div {
+            width: 14px;
+            height: 2px;
+            background-color: #3BD622;
+            margin:3px 0;
+        }
+
+        @media (max-width: 768px) {
+            .mob-button {
+                display: block;
+            }
+
+            aside {
+                position: fixed!important;
+                display: none;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .mob-button {
+                display: none;
+            }
+
+            aside {
+                display: block;
+            }
+        }
     </style>
 </head>
 <body>
@@ -183,6 +230,14 @@
  <section class="nav-inside">
      <section class="nav-left">
          <img width="156" src="assets/starskey_logo.png" alt="Starskey Logo">
+     </section>
+
+     <section class="mob-button">
+            <button>
+                <div></div>
+                <div></div>
+                <div></div>
+            </button>
      </section>
 
      <section class="nav-right">
@@ -394,6 +449,20 @@ if err != nil {
 
 <script src="assets/prism.js"></script>
 <script async defer src="https://buttons.github.io/buttons.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const mobButton = document.querySelector(".mob-button button");
+        const aside = document.querySelector("aside");
+
+        mobButton.addEventListener("click", function() {
+            if (aside.style.display === "none" || aside.style.display === "") {
+                aside.style.display = "block";
+            } else {
+                aside.style.display = "none";
+            }
+        });
+    });
+</script>
 </body>
 
 </html>
