@@ -12,6 +12,11 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="og:site_name" content="Starskey - Fast embedded key value store">
     <meta name="twitter:image:alt" content="Starskey">
+    <link rel="icon" type="image/png" href="assets/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="shortcut icon" href="assets/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
+    <link rel="manifest" href="assets/site.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -155,6 +160,22 @@
             margin-right: 10px;
         }
 
+        .bench a {
+            padding: 5px 20px;
+            border-radius: 4px;
+            background: #142b3d;
+            color: #efefef;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+
+        .bench a:hover {
+            background: #14334b;
+            color: #efefef;
+            border: none;
+        }
+
     </style>
 </head>
 <body>
@@ -179,6 +200,9 @@
         <li><a href="#txns">Transactions</a></li>
         <li><a href="#query-by-range">Querying by range</a></li>
         <li><a href="#query-by-filter">Querying by filter</a></li>
+        <li><a href="#benchmarking">Benchmarks & Benchmarking</a></li>
+        <li><a href="#key-life-cycle">Key life cycle</a></li>
+        <li><a href="#memory-disk-sorting">Memory and disk sorting</a></li>
     </ul>
 </aside>
 
@@ -194,7 +218,7 @@
         <ul class="features">
             <li><strong>Levelled partial merge compaction</strong> Compactions occur on writes, if any disk level reaches it's max size half of the sstables are merged into a new sstable and placed into the next level. This algorithm is recursive until last level. At last level if full we merge all sstables into a new sstable.</li>
             <li><strong>Simple API</strong> with Put, Get, Delete, Range, FilterKeys.</li>
-            <li><strong>Atomic transactions</strong> You can group multiple operations into a single atomic transaction.  If any operation fails the entire transaction is rolled back.  Only committed transactions roll back.</li>
+            <li><strong>Acid transactions</strong> You can group multiple operations into a single atomic transaction.  If any operation fails the entire transaction is rolled back.  Only committed transactions roll back.</li>
             <li><strong>Configurable options</strong> You can configure many options such as max levels, memtable threshold, bloom filter, and more.</li>
             <li><strong>WAL with recovery</strong> Starskey uses a write ahead log to ensure durability. Memtable is replayed if a flush did not occur prior to shutdown. On sorted runs to disk the WAL is truncated.</li>
             <li><strong>Key value separation</strong> Keys and values are stored separately for sstables.</li>
@@ -285,7 +309,7 @@ if err := starskey.Delete([]byte("key")); err != nil {
 
 
 <h1 id="txns">Transactions</h1>
-<p>Using atomic transactions to group multiple operations into a single atomic transaction.</p>
+<p>Using acid transactions to group multiple operations into a single atomic transaction.</p>
 
         <pre class="language-go">
 <code class="language-go">
@@ -345,6 +369,21 @@ if err != nil {
 </pre>
 
 
+        <h1 id="benchmarking">Benchmarks & Benchmarking</h1>
+        <p>There is a benchmark program comparing against Pebble and BBolt.  Random writes, reads, and deletes.</p><br/>
+        <p class="bench"><a target="_blank" href="https://github.com/starskey-io/bench">Starskey Bench</a></p>
+
+        <h1 id="key-life-cycle">Key life cycle</h1>
+        <p>
+            A key once inserted will live in the memtable until it is flushed to disk. Once flushed to disk it will live in an sstable at l1 until it is compacted. Once compacted it will be merged into a new sstable at the next level. This process is recursive until the last level. At the last level if full we merge all sstables into a new sstable.
+            <br/>
+            If a key is deleted it will live on the same way until it reaches last level at which point it will be removed entirely.
+        </p>
+
+        <h1 id="memory-disk-sorting">Memory and disk sorting</h1>
+        <p>
+            Sorting would be lexicographical (alphabetical), meaning it will sort based on the byte-by-byte comparisons of slices. We use bytes.Compare to sort keys in memory and on disk.
+        </p>
     </article>
 
 </main>
