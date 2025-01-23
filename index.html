@@ -274,7 +274,7 @@
 
         <h2>Features</h2>
         <ul class="features">
-            <li><strong>Levelled partial merge compaction</strong> Compactions occur on writes, if any disk level reaches it's max size half of the sstables are merged into a new sstable and placed into the next level. This algorithm is recursive until last level. At last level if full we merge all sstables into a new sstable.</li>
+            <li><strong>Levelled partial merge compaction</strong> Compactions occur on writes, if any disk level reaches it's max size half of the sstables are merged into a new sstable and placed into the next level. This algorithm is recursive until last level. At last level if full we merge all sstables into a new sstable. During merge operations tombstones(deleted keys) are removed.</li>
             <li><strong>Simple API</strong> with Put, Get, Delete, Range, FilterKeys.</li>
             <li><strong>Acid transactions</strong> You can group multiple operations into a single atomic transaction.  If any operation fails the entire transaction is rolled back.  Only committed transactions roll back.</li>
             <li><strong>Configurable options</strong> You can configure many options such as max levels, memtable threshold, bloom filter, and more.</li>
@@ -282,9 +282,9 @@
             <li><strong>Key value separation</strong> Keys and values are stored separately for sstables.</li>
             <li><strong>Bloom filters</strong> Each sstable has an in memory bloom filter to reduce disk reads.</li>
             <li><strong>Fast</strong> up to 400k+ ops per second.</li>
-            <li><strong>Compression</strong> Snappy compression is available.</li>
-            <li><strong>Logging</strong> Logging to file is available.</li>
-            <li><strong>Thread safe</strong> Starskey is thread safe.</li>
+            <li><strong>Compression</strong> S2, and Snappy compression is available.</li>
+            <li><strong>Logging</strong> Logging to file is available. Will write to standard out if not enabled.</li>
+            <li><strong>Thread safe</strong> Starskey is thread safe. Multiple goroutines can read and write to Starskey concurrently.</li>
         </ul>
 
         <h1 id="getting-started">Getting Started</h1>
