@@ -206,6 +206,14 @@
             margin:3px 0;
         }
 
+        .note {
+            background: #f9f9f9;
+            padding: 10px;
+            border-left: 4px solid #c71328;
+            color: #964f57;
+            margin-top: 20px;
+        }
+
         @media (max-width: 768px) {
             .mob-button {
                 display: block;
@@ -301,28 +309,30 @@ import (
         <p>To open a new database you must pass a configuration pointer.  This is required.</p>
 <pre class="language-go">
 <code class="language-go">
-starskey, err := Open(&Config{
-        Permission:        0755,                 // Dir, file permission
-        Directory:         "db_dir",             // Directory to store data
-        FlushThreshold:    (1024 * 1024) * 24,   // 24mb Flush threshold in bytes
-        MaxLevel:          3,                    // Max levels number of disk levels
-        SizeFactor:        10,                   // Size factor for each level.  Say 10 that's 10 * the FlushThreshold at each level. So level 1 is 10MB, level 2 is 100MB, level 3 is 1GB.
-        BloomFilter:       false,                // If you want to use bloom filters
-        Logging:           true,                 // Enable logging to file
-        Compression:       false,                // Enable compression
-        CompressionOption: NoCompression,        // Or SnappyCompression, S2Compression
-    })                                           // Config cannot be nil
+skey, err := starskey.Open(&starskey.Config{
+        Permission:        0755,                   // Dir, file permission
+        Directory:         "db_dir",               // Directory to store data
+        FlushThreshold:    (1024 * 1024) * 24,     // 24mb Flush threshold in bytes
+        MaxLevel:          3,                      // Max levels number of disk levels
+        SizeFactor:        10,                     // Size factor for each level.  Say 10 that's 10 * the FlushThreshold at each level. So level 1 is 10MB, level 2 is 100MB, level 3 is 1GB.
+        BloomFilter:       false,                  // If you want to use bloom filters
+        Logging:           true,                   // Enable logging to file
+        Compression:       false,                  // Enable compression
+        CompressionOption: starskey.NoCompression, // Or SnappyCompression, S2Compression
+    })                                             // Config cannot be nil
 if err != nil {
-    t.Fatalf("Failed to open starskey: %v", err)
+    log.Fatalf("Failed to open starskey: %v", err)
 }
 </code>
 </pre>
+        <p class="note">Mind you examples use <strong>skey</strong> as the variable name for opened starskey instance(s).</p>
+
         <h2>Close</h2>
         <p>To close database gracefully.</p>
         <pre class="language-go">
 <code class="language-go">
-if err := starskey.Close(); err != nil {
-    t.Fatalf("Failed to close starskey: %v", err)
+if err := skey.Close(); err != nil {
+    log.Fatalf("Failed to close starskey: %v", err)
 }
 </code>
 </pre>
@@ -337,8 +347,8 @@ if err := starskey.Close(); err != nil {
 key := []byte("some_key")
 value := []byte("some_value")
 
-if err := starskey.Put(key, value); err != nil {
-    t.Fatalf("Failed to put key-value pair: %v", err)
+if err := skey.Put(key, value); err != nil {
+    log.Fatalf("Failed to put key-value pair: %v", err)
 }
 </code>
 </pre>
@@ -348,9 +358,9 @@ if err := starskey.Put(key, value); err != nil {
         <p>To retrieve a value you pass a key byte array.</p>
         <pre class="language-go">
 <code class="language-go">
-v, err := starskey.Get(key)
+v, err := skey.Get(key)
 if err != nil {
-    t.Fatalf("Failed to get key-value pair: %v", err)
+    log.Fatalf("Failed to get key-value pair: %v", err)
 }
 </code>
 </pre>
@@ -359,8 +369,8 @@ if err != nil {
         <p>To remove a key-value you pass a key byte array you want to remove.</p>
         <pre class="language-go">
 <code class="language-go">
-if err := starskey.Delete([]byte("key")); err != nil {
-    t.Fatalf("Failed to delete key: %v", err)
+if err := skey.Delete([]byte("key")); err != nil {
+    log.Fatalf("Failed to delete key: %v", err)
 }
 </code>
 </pre>
@@ -371,16 +381,16 @@ if err := starskey.Delete([]byte("key")); err != nil {
 
         <pre class="language-go">
 <code class="language-go">
-txn := starskey.BeginTxn()
+txn := skey.BeginTxn()
 if txn == nil {
-    t.Fatalf("Failed to begin transaction")
+    log.Fatalf("Failed to begin transaction")
 }
 
 txn.Put([]byte("key"), []byte("value"))
 // or txn.Delete([]byte("key"))
 
 if err := txn.Commit(); err != nil {
-    t.Fatalf("Failed to commit transaction: %v", err)
+    log.Fatalf("Failed to commit transaction: %v", err)
 }
 </code>
 </pre>
@@ -388,13 +398,13 @@ if err := txn.Commit(); err != nil {
         <h3>Or</h3>
         <pre class="language-go">
 <code class="language-go">
-err = starskey.Update(func(txn *Txn) error {
+err = skey.Update(func(txn *Txn) error {
     txn.Put([]byte("key"), []byte("value")) // or txn.Delete, txn.Get
     // ..
     return nil
 })
 if err != nil {
-    t.Fatalf("Failed to update: %v", err)
+    log.Fatalf("Failed to update: %v", err)
 }
 </code>
 </pre>
@@ -403,9 +413,9 @@ if err != nil {
 <p>Using range method to get a range of values between two keys.</p>
         <pre class="language-go">
 <code class="language-go">
-results, err := starskey.Range([]byte("key900"), []byte("key980"))
+results, err := skey.Range([]byte("key900"), []byte("key980"))
 if err != nil {
-    t.Fatalf("Failed to range: %v", err)
+    log.Fatalf("Failed to range: %v", err)
 }
 </code>
 </pre>
@@ -419,9 +429,9 @@ compareFunc := func(key []byte) bool {
     return bytes.HasPrefix(key, []byte("c"))
 }
 
-results, err := starskey.FilterKeys(compareFunc)
+results, err := skey.FilterKeys(compareFunc)
 if err != nil {
-    t.Fatalf("Failed to filter: %v", err)
+    log.Fatalf("Failed to filter: %v", err)
 }
 </code>
 </pre>
