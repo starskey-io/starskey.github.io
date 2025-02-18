@@ -377,7 +377,6 @@ if err := skey.Delete([]byte("key")); err != nil {
 }
 
 // Delete by range
-
 if err := skey.DeleteByRange([]byte("startKey"), []byte("endKey")); err != nil {
     // ..handle error
 }
