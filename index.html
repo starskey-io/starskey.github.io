@@ -265,6 +265,7 @@
         <li><a href="#crud-ops">CRUD Operations</a></li>
         <li><a href="#txns">Transactions</a></li>
         <li><a href="#query-by-range">Querying by range</a></li>
+        <li><a href="#query-by-prefix">Querying by prefix</a></li>
         <li><a href="#query-by-filter">Querying by filter</a></li>
         <li><a href="#benchmarking">Benchmarks & Benchmarking</a></li>
         <li><a href="#key-life-cycle">Key life cycle</a></li>
@@ -289,7 +290,7 @@
             <li><strong>WAL with recovery</strong> Starskey uses a write ahead log to ensure durability. Memtable is replayed if a flush did not occur prior to shutdown. On sorted runs to disk the WAL is truncated.</li>
             <li><strong>Key value separation</strong> Keys and values are stored separately for sstables.</li>
             <li><strong>Bloom filters</strong> Each sstable has an in memory bloom filter to reduce disk reads.</li>
-            <li><strong>Succinct Range Filters</strong> If enabled will speed up range queries. Will use more memory than bloom filters. Only a bloom filter OR a SuRF filter can be enabled.</li>
+            <li><strong>Succinct Range Filters</strong> If enabled will speed up range and prefix queries. Will use more memory than bloom filters. Only a bloom filter OR a SuRF filter can be enabled.</li>
             <li><strong>Fast</strong> up to 400k+ ops per second.</li>
             <li><strong>Compression</strong> S2, and Snappy compression is available.</li>
             <li><strong>Logging</strong> Logging to file is available. Will write to standard out if not enabled.</li>
@@ -318,7 +319,7 @@ skey, err := starskey.Open(&starskey.Config{
         MaxLevel:          3,                      // Max levels number of disk levels
         SizeFactor:        10,                     // Size factor for each level.  Say 10 that's 10 * the FlushThreshold at each level. So level 1 is 10MB, level 2 is 100MB, level 3 is 1GB.
         BloomFilter:       false,                  // If you want to use bloom filters
-        SuRF:              false,                  // If enabled will speed up range queries as we check if an sstable has the keys we are looking for.
+        SuRF:              false,                  // If enabled will speed up range and prefix queries as we check if an sstable has the keys we are looking for.
         Logging:           true,                   // Enable logging to file
         Compression:       false,                  // Enable compression
         CompressionOption: starskey.NoCompression, // Or SnappyCompression, S2Compression
@@ -390,6 +391,11 @@ compareFunc := func(key []byte) bool {
 if err := skey.DeleteByFilter(compareFunc); err != nil {
     // ..handle error
 }
+
+// Delete by prefix
+if n, err := skey.DeleteByPrefix([]byte("key")); err != nil {
+    // ..handle error
+}
 </code>
 </pre>
 
@@ -431,6 +437,24 @@ if err != nil {
         <pre class="language-go">
 <code class="language-go">
 results, err := skey.Range([]byte("key900"), []byte("key980"))
+if err != nil {
+    // ..handle error
+}
+</code>
+</pre>
+
+        <h1 id="query-by-prefix">Querying by prefix</h1>
+        <p>Starskey provides multiple prefix search methods.</p>
+        <pre class="language-go">
+<code class="language-go">
+// Longest prefix search
+result, n, err := skey.LongestPrefixSearch([]byte("key"))
+if err != nil {
+    // ..handle error
+}
+
+// Prefix search
+results, err := skey.PrefixSearch([]byte("ke"))
 if err != nil {
     // ..handle error
 }
