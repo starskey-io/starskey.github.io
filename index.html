@@ -283,14 +283,14 @@
 
         <h2>Features</h2>
         <ul class="features">
-            <li><strong>Levelled partial merge compaction</strong> Compactions occur on writes, if any disk level reaches it's max size half of the sstables are merged into a new sstable and placed into the next level. This algorithm is recursive until last level. At last level if full we merge all sstables into a new sstable. During merge operations tombstones(deleted keys) are removed.</li>
-            <li><strong>Simple API</strong> with Put, Get, Delete, Range, FilterKeys.</li>
-            <li><strong>Acid transactions</strong> You can group multiple operations into a single atomic transaction.  If any operation fails the entire transaction is rolled back.  Only committed transactions roll back.</li>
-            <li><strong>Configurable options</strong> You can configure many options such as max levels, memtable threshold, bloom filter, and more.</li>
+            <li><strong>Levelled partial merge compaction</strong> Compactions occur on writes, if any disk level reaches it's max size, then half of the sstables are merged into a new sstable and placed into the next level.  This algorithm is recursive until last level.  At last level if full we merge all sstables into a new sstable.  During merge operations tombstones(deleted keys) are removed when a key reaches the last level.</li>
+            <li><strong>Simple API</strong> with Put, Get, Delete, Range, FilterKeys, Update (for txns), PrefixSearch, LongestPrefixSearch, DeleteByRange, DeleteByFilter, DeleteByPrefix.</li>
+            <li><strong>Acid transactions</strong> You can group multiple operations into a single atomic transaction.  If any operation fails the entire transaction is rolled back.  Only committed operations within a transaction roll back.  These transactions would be considered fully serializable.  Transactions themselves are also thread safe so you can add operations to them safety.</li>
+            <li><strong>Configurable options</strong> You can configure many options such as max levels, memtable threshold, bloom filter,succinct range filters, logging, compression and more.</li>
             <li><strong>WAL with recovery</strong> Starskey uses a write ahead log to ensure durability. Memtable is replayed if a flush did not occur prior to shutdown. On sorted runs to disk the WAL is truncated.</li>
             <li><strong>Key value separation</strong> Keys and values are stored separately for sstables.</li>
-            <li><strong>Bloom filters</strong> Each sstable has an in memory bloom filter to reduce disk reads.</li>
-            <li><strong>Succinct Range Filters</strong> If enabled will speed up range and prefix queries. Will use more memory than bloom filters. Only a bloom filter OR a SuRF filter can be enabled.</li>
+            <li><strong>Bloom filters</strong> Each sstable has an in memory bloom filter to reduce disk reads. Bloom filters are used to check if a key exists in an SST instead of scanning it entirely.</li>
+            <li><strong>Succinct Range Filters</strong> If enabled, each sstable will use a SuRF instead of a bloom filter;  This will speed up range, prefix queries. Will use more memory than bloom filters. Only a bloom filter OR a SuRF filter can be enabled.</li>
             <li><strong>Fast</strong> up to 400k+ ops per second.</li>
             <li><strong>Compression</strong> S2, and Snappy compression is available.</li>
             <li><strong>Logging</strong> Logging to file is available. Will write to standard out if not enabled.</li>
@@ -313,17 +313,27 @@ import (
 <pre class="language-go">
 <code class="language-go">
 skey, err := starskey.Open(&starskey.Config{
-        Permission:        0755,                   // Dir, file permission
-        Directory:         "db_dir",               // Directory to store data
-        FlushThreshold:    (1024 * 1024) * 24,     // 24mb Flush threshold in bytes
-        MaxLevel:          3,                      // Max levels number of disk levels
-        SizeFactor:        10,                     // Size factor for each level.  Say 10 that's 10 * the FlushThreshold at each level. So level 1 is 10MB, level 2 is 100MB, level 3 is 1GB.
-        BloomFilter:       false,                  // If you want to use bloom filters
-        SuRF:              false,                  // If enabled will speed up range and prefix queries as we check if an sstable has the keys we are looking for.
-        Logging:           true,                   // Enable logging to file
-        Compression:       false,                  // Enable compression
-        CompressionOption: starskey.NoCompression, // Or SnappyCompression, S2Compression
-    })                                             // Config cannot be nil
+    Permission:        0755,                   // Dir, file permission
+    Directory:         "db_dir",               // Directory to store data
+    FlushThreshold:    (1024 * 1024) * 24,     // 24mb Flush threshold in bytes, for production use 64mb or higher
+    MaxLevel:          3,                      // Max levels number of disk levels
+    SizeFactor:        10,                     // Size factor for each level.  Say 10 that's 10 * the FlushThreshold at each level. So level 1 is 10MB, level 2 is 100MB, level 3 is 1GB.
+    BloomFilter:       false,                  // If you want to use bloom filters
+    SuRF:              false,                  // If enabled will speed up range queries as we check if an sstable has the keys we are looking for.
+    Logging:           true,                   // Enable logging to file
+    Compression:       false,                  // Enable compression
+    CompressionOption: starskey.NoCompression, // Or SnappyCompression, S2Compression
+    // Internal options
+    // Optional: &OptionalConfig{
+    //    BackgroundFSync:         .. If you don't want to fsync writes to disk (default is true)
+    //    BackgroundFSyncInterval: .. Interval for background fsync, if configured true (default is 256ms)
+    //    TTreeMin:                .. Minimum degree of the T-Tree
+    //    TTreeMax:                .. Maximum degree of the T-Tree
+    //    PageSize:                .. Page size for internal pagers
+    //    BloomFilterProbability:  .. Bloom filter probability
+    //    },
+    }) // Config cannot be nil**
+    }) // Config cannot be nil**
 if err != nil {
     // ..handle error
 }
@@ -378,7 +388,7 @@ if err := skey.Delete([]byte("key")); err != nil {
 }
 
 // Delete by range
-if err := skey.DeleteByRange([]byte("startKey"), []byte("endKey")); err != nil {
+if n, err := skey.DeleteByRange([]byte("startKey"), []byte("endKey")); err != nil {
     // ..handle error
 }
 
@@ -388,7 +398,7 @@ compareFunc := func(key []byte) bool {
     return bytes.HasPrefix(key, []byte("c"))
 }
 
-if err := skey.DeleteByFilter(compareFunc); err != nil {
+if n, err := skey.DeleteByFilter(compareFunc); err != nil {
     // ..handle error
 }
 
@@ -433,7 +443,7 @@ if err != nil {
 </pre>
 
 <h1 id="query-by-range">Querying by range</h1>
-<p>Using range method to get a range of values between two keys.</p>
+<p>You can provide a start and end key to retrieve a range of keys.</p>
         <pre class="language-go">
 <code class="language-go">
 results, err := skey.Range([]byte("key900"), []byte("key980"))
@@ -444,7 +454,7 @@ if err != nil {
 </pre>
 
         <h1 id="query-by-prefix">Querying by prefix</h1>
-        <p>Starskey provides multiple prefix search methods.</p>
+        <p>Starskey supports optimized prefix searches.</p>
         <pre class="language-go">
 <code class="language-go">
 // Longest prefix search
